@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 import torch
 import torch.nn.functional as F
 from PIL import Image
@@ -51,7 +51,10 @@ CLASS_NAMES = [
     'Tomato__Tomato_YellowLeaf__Curl_Virus', 
     'Tomato__Tomato_mosaic_virus', 'Tomato_healthy'
 ]
-
+@app.get('/')
+def root():
+    return RedirectResponse(url='/homepage')
+    
 @app.get('/homepage', response_class=HTMLResponse)
 def index():
     return """
