@@ -5,14 +5,8 @@ health conditions from images of pepper, potato, and tomato leaves. The
 project includes a FastAPI web interface where a user can upload a leaf image
 and receive a predicted condition with the model's confidence score.
 
-## Features
+[Live Demo](https://leaflens-3a49.onrender.com/homepage)
 
-- Browser-based leaf image upload.
-- Drag-and-drop image selection.
-- Prediction of 15 PlantVillage leaf classes.
-- Confidence score returned with every prediction.
-- FastAPI backend suitable for deployment as a hosted web service.
-- ResNet18 image-classification model with pretrained ImageNet features.
 
 ## How it works
 
