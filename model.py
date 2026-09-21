@@ -6,7 +6,7 @@ from torchvision import models
 class Net(nn.Module):
     def __init__(self,num_classes= 15):
         super().__init__()
-        self.resnet = models.resnet18(weights = models.ResNet18_Weights.DEFAULT)
+        self.model = torchvision.models.resnet18(weights=None)
 
         in_features = self.resnet.fc.in_features
 
