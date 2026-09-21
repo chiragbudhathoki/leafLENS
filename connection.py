@@ -2,11 +2,11 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 import torch
 import torch.nn.functional as F
-from PIL import Image
+from PIL import Image, ImageOps
 import io
 import torchvision.transforms.v2 as v2
 import os
-from urllib.request import urlretrieve
+import gdown
 
 from model import Net
 
@@ -21,7 +21,7 @@ if not os.path.exists(MODEL_PATH):
     print("Model weights missing locally. Downloading from Google Drive...")
     file_id = "1oqZP8awWiTeuxvXZj2aAcDePMHyhOgg5"
     url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    urlretrieve(url, MODEL_PATH)
+    gdown.download(url, MODEL_PATH, quiet=False)
     print("Download completed successfully!")
 
 # Load architecture and weights
@@ -51,6 +51,7 @@ CLASS_NAMES = [
     'Tomato__Tomato_YellowLeaf__Curl_Virus', 
     'Tomato__Tomato_mosaic_virus', 'Tomato_healthy'
 ]
+
 @app.get('/')
 def root():
     return RedirectResponse(url='/homepage')
@@ -324,7 +325,7 @@ def index():
   .card p.detail { margin: .75rem 0 0; color: var(--muted); }
 
   .conf { margin-top: 1.4rem; }
-  .conf-row { display: flex; justify-space-between; align-items: baseline; margin-bottom: .45rem; font-weight: 500; color: var(--muted); }
+  .conf-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .45rem; font-weight: 500; color: var(--muted); }
   .conf-row strong { font-family: var(--display); font-size: 1.35rem; color: var(--tone); }
   .bar { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .bar span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--bar); transition: width .8s cubic-bezier(.2, .8, .2, 1); }
@@ -549,7 +550,11 @@ def index():
 @app.post('/upload')
 async def upload_img(file: UploadFile = File(...)):
     image_bytes = await file.read()
-    image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+    image = Image.open(io.BytesIO(image_bytes))
+    
+ 
+    image = ImageOps.exif_transpose(image)
+    image = image.convert('RGB')
     
     input_tensor = transform(image).unsqueeze(0).to(device)
     
