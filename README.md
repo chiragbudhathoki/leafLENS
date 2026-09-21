@@ -24,8 +24,7 @@ and receive a predicted condition with the model's confidence score.
 4. The scores are converted to probabilities, and the highest-probability
    class is returned with its confidence percentage.
 
-The trained weights are stored in [`leaflens.pth`](./leaflens.pth). The model
-definition is in [`model.py`](./model.py), and the browser/API integration is
+The model definition is in [`model.py`](./model.py), and the browser/API integration is
 implemented in [`connection.py`](./connection.py).
 
 ## Supported classes
