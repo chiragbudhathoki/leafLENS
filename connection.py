@@ -27,7 +27,7 @@ if not os.path.exists(MODEL_PATH):
 # Load architecture and weights
 model = Net().to(device)
 try:
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device, weights_only=False))
     model.eval()
     print("LeafLENS Model Loaded Successfully!")
 except Exception as e:
