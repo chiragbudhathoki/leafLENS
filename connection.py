@@ -4,47 +4,53 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 import io
-import torchvision.transforms as transforms
 import torchvision.transforms.v2 as v2
 import os
+from urllib.request import urlretrieve
 
 from model import Net
 
 app = FastAPI()
 
-# ==========================================
-# 1. LOAD THE MODEL & PREPROCESSING PIPELINE
-# ==========================================
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# --- AUTO-DOWNLOAD MODEL WEIGHTS FROM GOOGLE DRIVE ---
+MODEL_PATH = "leaflens.pth"
+
+if not os.path.exists(MODEL_PATH):
+    print("Model weights missing locally. Downloading from Google Drive...")
+    file_id = "1oqZP8awWiTeuxvXZj2aAcDePMHyhOgg5"
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    urlretrieve(url, MODEL_PATH)
+    print("Download completed successfully!")
 
 # Load architecture and weights
 model = Net().to(device)
 try:
-    model.load_state_dict(torch.load("leaflens.pth", map_location=device))
+    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
     model.eval()
     print("LeafLENS Model Loaded Successfully!")
 except Exception as e:
-    print(f"Warning: Model not loaded. Did training finish? Error: {e}")
+    print(f"Warning: Model not loaded. Error: {e}")
 
 # Exact transform from your training pipeline
 transform = v2.Compose([
-    v2.Resize((224,224)),
+    v2.Resize((224, 224)),
     v2.ToImage(),
-    v2.ToDtype(torch.float32,scale= True),
+    v2.ToDtype(torch.float32, scale=True),
     v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
-
 
 CLASS_NAMES = [
     'Pepper__bell___Bacterial_spot', 
     'Pepper__bell___healthy', 
-    'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy', 'Tomato_Bacterial_spot', 'Tomato_Early_blight', 
+    'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy', 
+    'Tomato_Bacterial_spot', 'Tomato_Early_blight', 
     'Tomato_Late_blight', 'Tomato_Leaf_Mold', 'Tomato_Septoria_leaf_spot', 
-    'Tomato_Spider_mites_Two_spotted_spider_mite', 'Tomato__Target_Spot', 'Tomato__Tomato_YellowLeaf__Curl_Virus', 
-    'Tomato__Tomato_mosaic_virus', 'Tomato_healthy']
-
-
-
+    'Tomato_Spider_mites_Two_spotted_spider_mite', 'Tomato__Target_Spot', 
+    'Tomato__Tomato_YellowLeaf__Curl_Virus', 
+    'Tomato__Tomato_mosaic_virus', 'Tomato_healthy'
+]
 
 @app.get('/homepage', response_class=HTMLResponse)
 def index():
@@ -188,7 +194,6 @@ def index():
   .lens.is-drag { box-shadow: 0 0 0 8px var(--leaf), 0 0 0 20px rgba(207, 232, 106, .7); }
   .lens:focus-visible { outline: 3px solid var(--leaf); outline-offset: 14px; }
 
-  /* light glare so the circle reads as glass */
   .lens::after {
     content: "";
     position: absolute;
@@ -316,15 +321,13 @@ def index():
   .card p.detail { margin: .75rem 0 0; color: var(--muted); }
 
   .conf { margin-top: 1.4rem; }
-  .conf-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .45rem; font-weight: 500; color: var(--muted); }
+  .conf-row { display: flex; justify-space-between; align-items: baseline; margin-bottom: .45rem; font-weight: 500; color: var(--muted); }
   .conf-row strong { font-family: var(--display); font-size: 1.35rem; color: var(--tone); }
   .bar { height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .bar span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--bar); transition: width .8s cubic-bezier(.2, .8, .2, 1); }
 
   .note { margin: 1.25rem 0 0; padding-top: 1rem; border-top: 1.5px solid var(--line); font-size: .92rem; color: var(--muted); }
 
-
-  /* ---------- Small screens ---------- */
   @media (max-width: 900px) {
     main {
       grid-template-columns: minmax(0, 1fr);
@@ -389,10 +392,9 @@ def index():
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
-  const stage = $('stage'), lens = $('lens'), input = $('file'), preview = $('preview'),
-        empty = $('empty'), analyzeBtn = $('analyze'), changeBtn = $('change'), slot = $('slot');
+  const stage = $('stage'), lens =$('lens'), input = $('file'), preview =$('preview'),
+        empty = $('empty'), analyzeBtn =$('analyze'), changeBtn = $('change'), slot =$('slot');
 
-  // Backend class name -> [crop, condition]
   const LABELS = {
     'Pepper__bell___Bacterial_spot': ['Bell pepper', 'Bacterial spot'],
     'Pepper__bell___healthy': ['Bell pepper', 'Healthy leaf'],
@@ -456,7 +458,7 @@ def index():
          <span class="pill">${esc(pill)}</span>
          <p class="verdict">${esc(title)}</p>
          <p class="detail">${esc(detail)}</p>${extra}
-       </div>`;
+        </div>`;
   }
 
   function showLoading() {
@@ -465,7 +467,7 @@ def index():
          <span class="pill">Analyzing</span>
          <p class="verdict">Reading the leaf&hellip;</p>
          <p class="detail">Checking it against 15 conditions.</p>
-       </div>`;
+        </div>`;
   }
 
   function showResult(data) {
@@ -492,7 +494,7 @@ def index():
            <div class="bar" role="img" aria-label="Confidence ${confText}"><span></span></div>
          </div>
          <p class="note">A model made this prediction, so it can be wrong. Check with a local agricultural expert before treating your plants.</p>
-       </div>`;
+        </div>`;
     const fill = slot.querySelector('.bar span');
     requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = conf + '%'; }));
   }
@@ -508,7 +510,6 @@ def index():
     body.append('file', currentFile);
 
     try {
-      // wait at least ~1s so the scan is visible even when the server answers instantly
       const [res] = await Promise.all([fetch('/upload', { method: 'POST', body }), wait(1000)]);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
@@ -524,7 +525,6 @@ def index():
     }
   }
 
-  // Events
   lens.addEventListener('click', () => input.click());
   changeBtn.addEventListener('click', () => input.click());
   analyzeBtn.addEventListener('click', analyze);
@@ -533,7 +533,6 @@ def index():
   ['dragenter', 'dragover'].forEach((t) => lens.addEventListener(t, (e) => { e.preventDefault(); lens.classList.add('is-drag'); }));
   ['dragleave', 'drop'].forEach((t) => lens.addEventListener(t, (e) => { e.preventDefault(); lens.classList.remove('is-drag'); }));
   lens.addEventListener('drop', (e) => { if (!busy) setFile(e.dataTransfer.files[0]); });
-  // stop the browser from opening a photo dropped outside the lens
   window.addEventListener('dragover', (e) => e.preventDefault());
   window.addEventListener('drop', (e) => e.preventDefault());
 
@@ -546,14 +545,11 @@ def index():
 
 @app.post('/upload')
 async def upload_img(file: UploadFile = File(...)):
-   
     image_bytes = await file.read()
     image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
     
-
     input_tensor = transform(image).unsqueeze(0).to(device)
     
-  
     with torch.no_grad():
         outputs = model(input_tensor)
         probabilities = F.softmax(outputs[0], dim=0)
@@ -562,7 +558,6 @@ async def upload_img(file: UploadFile = File(...)):
     predicted_class = CLASS_NAMES[predicted_idx.item()]
     conf_score = confidence.item() * 100
     
-
     return {
         'prediction': predicted_class,
         'confidence': conf_score
